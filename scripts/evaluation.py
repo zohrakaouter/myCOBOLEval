@@ -111,9 +111,9 @@ def exec(name, path, call_path) -> bool:
     # Once you have read this disclaimer and taken appropriate precautions,
     # uncomment the following lines and proceed at your own risk:
 
-    # if not cmd(f"./call_{name}"):
-    #     logger.warning(f"Runtime error for {path}")
-    #     return False
+    if not cmd(f"./call_{name}"):
+        logger.warning(f"Runtime error for {path}")
+        return False
 
     return True
 

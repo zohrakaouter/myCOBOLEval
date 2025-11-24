@@ -10,7 +10,7 @@ from data import HUMAN_EVAL
 
 def entrypoint():
     all_results = []
-    run_folders = ["gpt-4"]  # edit
+    run_folders = ["openai/gpt-4o"]  # edit
     for folder in run_folders:
         all_results.append(eval(f"preds/{folder}", "1"))
 

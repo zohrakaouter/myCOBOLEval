@@ -8,13 +8,21 @@ import openai
 from joblib import Memory
 from loguru import logger
 from marko.block import FencedCode
-from openai import OpenAI
+from mistralai import Mistral
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 from utils import Model, cleanup_dylib, cmd
+from mistralai.client import MistralClient
+#from mistralai.models.chat_completion import cha
 
 dotenv.load_dotenv()
+#MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+#openrouter_key = os.getenv("openrouter_key")
+#client = Mistral(api_key=MISTRAL_API_KEY)
 
+
+#client = Mistral(api_key=MISTRAL_API_KEY)
 memory = Memory("cache", verbose=0)
+
 
 OPENAI_SYSTEM_PROMPT = """```
 {}
@@ -26,12 +34,19 @@ Complete the above program. It should consist of a single markdown code block fo
 @memory.cache
 @retry(wait=wait_random_exponential(min=1, max=10), stop=stop_after_attempt(3))
 def chat(messages, model) -> str:
-    response = client.chat.completions.create(
+    response=openai.chat.completions.create(
         model=model.name,
         messages=messages,
-       # temperature=model.temp,
-        temperature=1.0,
+        temperature=model.temp
+
     )
+    #response = client.chat.complete(
+    #    model="mistral-medium-latest",
+     #   messages=messages,
+        #temperature=model.temp,
+  #  )
+
+    print("it is here !!!!")
     return response.choices[0].message.content
 
 
@@ -82,6 +97,7 @@ def swap_sections(src: str) -> str:
 class LLMGenerator:
     def __init__(self, model: Model):
         self.model = model
+        #name="mistal"
         self.output_path = f"./preds/{model.name}"
         self.solutions_path = os.path.join(self.output_path, "solutions")
         os.makedirs(self.solutions_path, exist_ok=True)
@@ -96,6 +112,7 @@ class LLMGenerator:
     def eval(self):
         for e in self.evals:
             name = f"{e['entry_point']}"
+
             path = os.path.join(self.solutions_path, f"{e['entry_point']}.cbl")
             for k in range(self.model.samples_per_task):
                 try:
@@ -141,8 +158,10 @@ class OpenAIChat(LLMGenerator):
                 {
                     "role": "system",
                     "content": OPENAI_SYSTEM_PROMPT.format(eval["prompt"]),
+
                 }
             ],
+
             self.model,
         )
         sol = extract_code_block(sol)
@@ -225,7 +244,6 @@ class JsonProgram(LLMGenerator):
     def solve(self, eval, sample_id=0):
         return self.completions[sample_id][eval["id"]]["completion"]
 
-
 @memory.cache
 def hf_complete(prompt, model, tokenizer, max_length=1024, eos_token=None) -> str:
     inputs = tokenizer.encode(prompt, return_tensors="pt", add_special_tokens=True).to("cuda")
@@ -289,6 +307,8 @@ class HuggingfaceInfill(LLMGenerator):
     def solve(self, eval, sample_id=0):
         prefix, suffix = self.get_prefix_suffix(eval["prompt"])
         prompt = f"{self.prefix_token}{prefix}{self.suffix_token}{suffix}"
+       # print("THE PROMPT  ", prompt)
+
         sol = hf_complete(prompt, self.hf_model, self.hf_tokenizer, eos_token=self.model.eos_token)
 
         try:
@@ -321,20 +341,26 @@ class HuggingfaceInfill(LLMGenerator):
 
 
 if __name__ == "__main__":
-      client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("OPENROUTER_API_KEY"),
-        )
+    #model = Model(name="gpt-4.1", samples_per_task=1)
+    #api_key = os.environ["MISTRAL_API_KEY"]
+ #   model = "mistral-medium-latest"
 
-      model = Model(name="openai/gpt-4o", samples_per_task=1)
-      #completion = client.chat.completions.create(
+    #client = Mistral(api_key=api_key)
+    #client = Mistral(api_key=api_key)
 
-     # model="openai/gpt-4o",
-      #messages=[{
-      #    "role": "user",
-      #    "content": "What is the meaning of life?" }  ]  )
-     # print(completion.choices[0].message.content)
-
-      runner = OpenAIChat(model)
-    #print(runner.solve({"prompt": "hello, world!"}))
-      runner.eval()
+    #chat_response = client.chat.complete(
+     #   model=model,
+      #  messages=[
+      #      {
+      #          "role": "user",
+       #         "content": "What is the best French cheese?",
+        #    },
+       # ]
+   # )
+   # print(chat_response)
+    #model = Model(name="mistral-small-latest", samples_per_task=1)
+    model = Model(name="o4-mini", samples_per_task=1)
+    runner = OpenAIChat(model)
+    print("call to AI finish")
+    #print(runner.solve({"prompt":"hello, world!"}))
+    runner.eval()

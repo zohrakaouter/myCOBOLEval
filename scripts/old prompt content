@@ -1,0 +1,13 @@
+"""
+Here is a COBOL program: ```{} ```. Give a list of 10 possible inputs and their respectful outputs obtained after the program execution for this program.
+Give a list of possible inputs and their respectful outputs obtained after the program execution for this program.
+Return the result strictly as JSON in the following format:
+
+{{
+  "pair_input_output": [
+    [[input1], [output1]],
+    [[input2], [output2]]
+  ]
+}}
+"""
+
